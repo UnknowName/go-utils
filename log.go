@@ -3,10 +3,13 @@ package goutils
 import (
 	"fmt"
 	"os"
+	"runtime"
+	"strings"
 	"time"
 )
 
 type LogLevel int8
+var log *Log
 
 const (
 	DEBUG LogLevel = iota
@@ -27,7 +30,6 @@ type Log struct {
 	Handlers []LogHandler
 }
 
-var log *Log
 
 func init() {
 	if log == nil {
@@ -40,6 +42,28 @@ func NewLog() *Log {
 		log = new(Log)
 	}
 	return log
+}
+
+func (l *Log) formatMsg(msg string) string {
+	var level string
+	switch l.Level {
+	case 0:
+		level = "DEBUG"
+	case 1:
+		level = "INFO"
+	case 2:
+		level = "WARN"
+	case 3:
+		level = "ERROR"
+	default:
+		level = "DEBUG"
+	}
+	logTime := time.Now().Format(timeFormat)
+	_, _file, line, _ := runtime.Caller(2)
+	_vars := strings.Split(_file, "/")
+	file := _vars[len(_vars) - 1]
+	_msg := fmt.Sprintf("%v [%v:%v] %v %v\n", logTime, file, line, level, msg)
+	return _msg
 }
 
 func (l *Log) SetLevel(level LogLevel) {
@@ -74,10 +98,9 @@ func (l *Log) Debug(msg string) {
 }
 
 func (l *Log) Info(msg string) {
-	logTime := time.Now().Format(timeFormat)
 	if l.Level <= INFO {
 		for _, handler := range l.Handlers {
-			_formatLog := fmt.Sprintf("%v INFO %v\n", logTime, msg)
+			_formatLog := l.formatMsg(msg)
 			handler.write(_formatLog)
 		}
 	}

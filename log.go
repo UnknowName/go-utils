@@ -88,10 +88,9 @@ func (l *Log) AddHandler(h LogHandler) {
 }
 
 func (l *Log) Debug(msg string) {
-	logTime := time.Now().Format(timeFormat)
 	if l.Level <= DEBUG {
 		for _, handler := range l.Handlers {
-			_formatLog := fmt.Sprintf("%v INFO %v\n", logTime, msg)
+			_formatLog := l.formatMsg(msg)
 			handler.write(_formatLog)
 		}
 	}
@@ -109,7 +108,8 @@ func (l *Log) Info(msg string) {
 func (l *Log) Warn(msg string) {
 	if l.Level <= WARN {
 		for _, handler := range l.Handlers {
-			handler.write("WARN: " + msg)
+			_formatLog := l.formatMsg(msg)
+			handler.write(_formatLog)
 		}
 	}
 }
@@ -117,7 +117,8 @@ func (l *Log) Warn(msg string) {
 func (l *Log) Error(msg string) {
 	if l.Level <= ERROR {
 		for _, handler := range l.Handlers {
-			handler.write("ERROR: " + msg)
+			_formatLog := l.formatMsg(msg)
+			handler.write(_formatLog)
 		}
 	}
 }

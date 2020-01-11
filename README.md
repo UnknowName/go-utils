@@ -2,12 +2,12 @@
 
 ## Examples
 
-- `utils.log`
+- `log.go`
 ```go
 package main
 
 import (
-    utils "github/unknowname/goutils"
+    utils "github.com/unknowname/goutils"
 )
 
 

@@ -131,3 +131,20 @@ type ConsoleHandler struct {
 func (c *ConsoleHandler) write(msg string) {
 	_, _ = os.Stdout.Write([]byte(msg))
 }
+
+
+type GELFHandler struct {
+	property map[string]interface{}
+}
+
+func NewGELFHandler() *GELFHandler {
+	mapData := map[string]interface{}{
+		"version": "1.1",
+		"source": "source",
+	}
+	return &GELFHandler{property: mapData}
+}
+
+func (g *GELFHandler) AddProperty(key, value string) {
+	g.property[key] = value
+}

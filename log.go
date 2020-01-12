@@ -25,16 +25,16 @@ type LogHandler interface {
 }
 
 
-type Log struct {
-	Level LogLevel
-	Handlers []LogHandler
-}
-
-
 func init() {
 	if log == nil {
 		log = new(Log)
 	}
+}
+
+
+type Log struct {
+	Level LogLevel
+	Handlers []LogHandler
 }
 
 func NewLog() *Log {
@@ -130,21 +130,4 @@ type ConsoleHandler struct {
 
 func (c *ConsoleHandler) write(msg string) {
 	_, _ = os.Stdout.Write([]byte(msg))
-}
-
-
-type GELFHandler struct {
-	property map[string]interface{}
-}
-
-func NewGELFHandler() *GELFHandler {
-	mapData := map[string]interface{}{
-		"version": "1.1",
-		"source": "source",
-	}
-	return &GELFHandler{property: mapData}
-}
-
-func (g *GELFHandler) AddProperty(key, value string) {
-	g.property[key] = value
 }

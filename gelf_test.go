@@ -12,5 +12,5 @@ func TestNewGELFHandler(t *testing.T) {
 	fmt.Println(connect == "128.0.255.10:12201")
 	gelf := NewGELFHandler(server, port)
 	gelf.AddProperty("from", "cheng-pc")
-	gelf.Write("test msg 1")
+	gelf.write("test msg 1")
 }

@@ -30,7 +30,7 @@ func (g *GELFHandler) AddProperty(key string, value interface{}) {
 	g.logProperty[key] = value
 }
 
-func (g *GELFHandler) Write(msg string) {
+func (g *GELFHandler) write(msg string) {
 	g.logProperty["short_message"] = msg
 	jsonMsg := g.toJson()
 	if g.conn == nil {

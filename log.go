@@ -34,7 +34,7 @@ func init() {
 
 type Log struct {
 	Level LogLevel
-	Handlers []LogHandler
+	handlers []LogHandler
 }
 
 func NewLog() *Log {
@@ -70,26 +70,32 @@ func (l *Log) SetLevel(level LogLevel) {
 	l.Level = level
 }
 
-func (l *Log) AddHandler(h LogHandler) {
-	exist := false
-	if l.Handlers == nil {
-		l.Handlers = make([]LogHandler, 0)
+func (l *Log) AddHandlers(hs...LogHandler) {
+	if l.handlers == nil {
+		l.handlers = make([]LogHandler, 0)
+	}
+	existHandler := len(l.handlers)
+	if existHandler == 0 {
+		l.handlers = append(l.handlers, hs...)
 	} else {
-		for _, handler := range l.Handlers {
-			if handler == h {
-				exist = true
-				break
+		for _, newHandler := range hs {
+			exist := false
+			for _, existHandler := range l.handlers {
+				if newHandler == existHandler {
+					exist = true
+					break
+				}
+				if !exist {
+					l.handlers = append(l.handlers, newHandler)
+				}
 			}
 		}
-	}
-	if !exist {
-		l.Handlers = append(l.Handlers, h)
 	}
 }
 
 func (l *Log) Debug(msg string) {
 	if l.Level <= DEBUG {
-		for _, handler := range l.Handlers {
+		for _, handler := range l.handlers {
 			_formatLog := l.formatMsg(msg)
 			handler.write(_formatLog)
 		}
@@ -98,7 +104,7 @@ func (l *Log) Debug(msg string) {
 
 func (l *Log) Info(msg string) {
 	if l.Level <= INFO {
-		for _, handler := range l.Handlers {
+		for _, handler := range l.handlers {
 			_formatLog := l.formatMsg(msg)
 			handler.write(_formatLog)
 		}
@@ -107,7 +113,7 @@ func (l *Log) Info(msg string) {
 
 func (l *Log) Warn(msg string) {
 	if l.Level <= WARN {
-		for _, handler := range l.Handlers {
+		for _, handler := range l.handlers {
 			_formatLog := l.formatMsg(msg)
 			handler.write(_formatLog)
 		}
@@ -116,7 +122,7 @@ func (l *Log) Warn(msg string) {
 
 func (l *Log) Error(msg string) {
 	if l.Level <= ERROR {
-		for _, handler := range l.Handlers {
+		for _, handler := range l.handlers {
 			_formatLog := l.formatMsg(msg)
 			handler.write(_formatLog)
 		}

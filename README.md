@@ -17,8 +17,9 @@ func init() {
     log = utils.NewLog()
     level := utils.DEBUG
     log.SetLevel(level)
-    consoleHandler := &utils.ConsoleHandler{}
-    log.AddHandler(consoleHandler)
+    consoleHandler := utils.NewConsoleHandler()
+    gelf := utils.NewGELFHandler("128.0.255.10", 12201)
+    log.AddHandlers(consoleHandler, gelf)
 }
 
 

@@ -9,8 +9,6 @@ import (
 )
 
 type LogLevel int8
-var log *Log
-
 const (
 	DEBUG LogLevel = iota
 	INFO
@@ -18,17 +16,18 @@ const (
 	ERROR
 	timeFormat = "2006/1/2 15:04:05.000"
 )
-
-
-type LogHandler interface {
-	write(msg string)
-}
+var log *Log
 
 
 func init() {
 	if log == nil {
 		log = new(Log)
 	}
+}
+
+
+type LogHandler interface {
+	write(level, msg string)
 }
 
 
@@ -42,28 +41,6 @@ func NewLog() *Log {
 		log = new(Log)
 	}
 	return log
-}
-
-func (l *Log) formatMsg(msg string) string {
-	var level string
-	switch l.level {
-	case 0:
-		level = "DEBUG"
-	case 1:
-		level = "INFO"
-	case 2:
-		level = "WARN"
-	case 3:
-		level = "ERROR"
-	default:
-		level = "DEBUG"
-	}
-	logTime := time.Now().Format(timeFormat)
-	_, _file, line, _ := runtime.Caller(2)
-	_vars := strings.Split(_file, "/")
-	file := _vars[len(_vars) - 1]
-	_msg := fmt.Sprintf("%v [%v:%v] %v %v\n", logTime, file, line, level, msg)
-	return _msg
 }
 
 func (l *Log) SetLevel(level LogLevel) {
@@ -96,8 +73,7 @@ func (l *Log) AddHandlers(hs...LogHandler) {
 func (l *Log) Debug(msg string) {
 	if l.level <= DEBUG {
 		for _, handler := range l.handlers {
-			_formatLog := l.formatMsg(msg)
-			handler.write(_formatLog)
+			handler.write("DEBUG", msg)
 		}
 	}
 }
@@ -105,8 +81,7 @@ func (l *Log) Debug(msg string) {
 func (l *Log) Info(msg string) {
 	if l.level <= INFO {
 		for _, handler := range l.handlers {
-			_formatLog := l.formatMsg(msg)
-			handler.write(_formatLog)
+			handler.write("INFO", msg)
 		}
 	}
 }
@@ -114,8 +89,7 @@ func (l *Log) Info(msg string) {
 func (l *Log) Warn(msg string) {
 	if l.level <= WARN {
 		for _, handler := range l.handlers {
-			_formatLog := l.formatMsg(msg)
-			handler.write(_formatLog)
+			handler.write("WARN", msg)
 		}
 	}
 }
@@ -123,8 +97,7 @@ func (l *Log) Warn(msg string) {
 func (l *Log) Error(msg string) {
 	if l.level <= ERROR {
 		for _, handler := range l.handlers {
-			_formatLog := l.formatMsg(msg)
-			handler.write(_formatLog)
+			handler.write("ERROR", msg)
 		}
 	}
 }
@@ -134,6 +107,20 @@ type ConsoleHandler struct {
 
 }
 
-func (c *ConsoleHandler) write(msg string) {
-	_, _ = os.Stdout.Write([]byte(msg))
+func NewConsoleHandler() *ConsoleHandler {
+	return &ConsoleHandler{}
+}
+
+func (c *ConsoleHandler) write(level, msg string) {
+	_formatMsg := c.formatMsg(level, msg)
+	_, _ = os.Stdout.Write([]byte(_formatMsg))
+}
+
+func (c *ConsoleHandler) formatMsg(level, msg string) string {
+	logTime := time.Now().Format(timeFormat)
+	_, _file, line, _ := runtime.Caller(2)
+	_vars := strings.Split(_file, "/")
+	file := _vars[len(_vars) - 1]
+	_msg := fmt.Sprintf("%v [%v:%v] %v %v\n", logTime, file, line, level, msg)
+	return _msg
 }

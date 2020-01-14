@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os"
+	"time"
 )
 
 const (
@@ -30,7 +32,24 @@ func (g *GELFHandler) AddProperty(key string, value interface{}) {
 	g.logProperty[key] = value
 }
 
-func (g *GELFHandler) write(msg string) {
+func (g *GELFHandler) write(level, msg string) {
+	var gelfLevel int8
+	switch level {
+	case "DEBUG":
+		gelfLevel = 0
+	case "INFO":
+		gelfLevel = 1
+	case "WARN":
+		gelfLevel = 2
+	case "ERROR":
+		gelfLevel = 3
+	default:
+		gelfLevel = 0
+	}
+	logTime := time.Now().Format(timeFormat)
+	g.logProperty["time"] = logTime
+	g.logProperty["level"] = gelfLevel
+	g.logProperty["host"], _ = os.Hostname()
 	g.logProperty["short_message"] = msg
 	jsonMsg := g.toJson()
 	if g.conn == nil {

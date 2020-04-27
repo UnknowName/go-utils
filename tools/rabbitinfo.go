@@ -1,4 +1,4 @@
-package goutils
+package main
 
 import (
 	"encoding/json"
@@ -32,6 +32,7 @@ func main() {
 	flag.Parse()
 	if attr == "" {
 		fmt.Println("Use -h to get help. the attr is must present")
+		fmt.Println("Support attr is channel,message,connect,consumer,mem_rate")
 		return
 	}
 	mq := NewRabbitMQ(host, port, user, password)
@@ -44,6 +45,8 @@ func main() {
 		fmt.Printf("%d", mq.GetConnectionCount())
 	case "consumer":
 		fmt.Printf("%d", mq.GetConsumerCount())
+	case "mem_rate":
+		fmt.Printf("%f", mq.GetMemoryRate())
 	default:
 		fmt.Printf("%d", mq.getAttr(attr))
 	}
@@ -139,4 +142,32 @@ func (r *RabbitMQ) GetConnectionCount() int {
 
 func (r *RabbitMQ) GetConsumerCount() int {
 	return r.getAttr("Consumer")
+}
+
+func (r *RabbitMQ) GetMemoryRate() float32 {
+	apiPath := fmt.Sprintf("http://%s:%s/api/nodes", r.Host, r.port)
+	var nodes []struct {
+		MemoryLimit int `json:"mem_limit"`
+		DiskLimit   int `json:"disk_free_limit"`
+		MemoryUsed  int `json:"mem_used"`
+		DiskFree    int `json:"disk_free"`
+	}
+	req, err := r.get(apiPath)
+	err = json.Unmarshal(req, &nodes)
+	failOnError(err, "Connect RabbitMQ failed")
+	var maxRate float32
+	for _, node := range nodes {
+		memoryUsedMB := node.MemoryUsed >> 20
+		memoryLimitMB := node.MemoryLimit >> 20
+		memoryRate := float32(memoryUsedMB) / float32(memoryLimitMB) * 100
+		maxRate = max(maxRate, memoryRate)
+	}
+	return maxRate
+}
+
+func max(x, y float32) float32 {
+	if x > y {
+		return x
+	}
+	return y
 }

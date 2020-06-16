@@ -47,6 +47,8 @@ func main() {
 		fmt.Printf("%d", mq.GetConsumerCount())
 	case "mem_rate":
 		fmt.Printf("%f", mq.GetMemoryRate())
+	case "queue":
+		fmt.Printf("%d", mq.GetQueueCount())
 	default:
 		fmt.Printf("%d", mq.getAttr(attr))
 	}
@@ -142,6 +144,10 @@ func (r *RabbitMQ) GetConnectionCount() int {
 
 func (r *RabbitMQ) GetConsumerCount() int {
 	return r.getAttr("Consumer")
+}
+
+func (r *RabbitMQ) GetQueueCount() int {
+	return r.getAttr("Queue")
 }
 
 func (r *RabbitMQ) GetMemoryRate() float32 {

@@ -1,0 +1,13 @@
+webhook:
+  image: webhook-dding
+  container_name: webhook-dding
+  restart: always
+  ports:
+    - 8081:8080
+  volumes:
+    - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+  environment:
+    - TZ=Asia/Shanghai
+    - GIN_MODE=release
+    - SKIP_KEY=log,es
+    - DDING_TOKEN=TokenValue

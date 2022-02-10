@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/unknowname/webhook-dding/utils"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 )
@@ -24,15 +25,15 @@ func main() {
 func send(c *gin.Context) {
 	postData, err := ioutil.ReadAll(c.Request.Body)
 	if err != nil {
-		fmt.Println("Read post data error ", err)
+		log.Println("Read post data error ", err)
 		c.JSON(500, gin.H{"message": "Read post data error"})
 		return
 	}
-	fmt.Println("接收到AlertManager的消息 ", string(postData))
+	log.Println("接收到AlertManager的消息:", string(postData))
 	// 将字节类型的告警信息转换成Golang struct类型
 	alert := utils.NewPrometheusAlert()
 	if err := alert.Decode(postData); err != nil {
-		fmt.Println("Struct error ", err)
+		log.Println("Struct error ", err)
 		c.JSON(500, gin.H{"message": "Decode error"})
 		return
 	}
@@ -44,15 +45,15 @@ func send(c *gin.Context) {
 			httpClient := http.Client{Timeout: time.Second * 5}
 			resp, err := httpClient.Post(url, contentType, bytes.NewBuffer(msg.Encode()))
 			if err != nil {
-				fmt.Println("send error ", err)
+				log.Println("send error ", err)
 			} else {
 				defer resp.Body.Close()
 				resp, _ := ioutil.ReadAll(resp.Body)
-				fmt.Println(string(resp))
+				log.Println(string(resp))
 			}
 		}()
 	} else {
-		fmt.Println("匹配到关键字", utils.GetSkipKey(), "此次告警将不会发送钉钉通知")
+		log.Println("匹配到关键字", utils.GetSkipKey(), "此次告警将不会发送钉钉通知")
 	}
 	c.JSON(200, gin.H{"message": "ok"})
 }

@@ -11,6 +11,25 @@ func GetToken() string {
 	return os.Getenv("DDING_TOKEN")
 }
 
+// env SKIPS=hostname:ItemName
+// eg: SKIPS=log:内存,es:memory
+// 表示针对主机名称包含log或者es且指标为内存或memory的告警的直接忽略
+
+type Skip struct {
+	HostName string
+	ItemName string
+}
+
+func GetSkips() []*Skip {
+	skips := make([]*Skip, 0)
+	skip := strings.Split(os.Getenv("SKIPS"), ",")
+	for i := range skip {
+		_skip := strings.Split(skip[i], ":")
+		skips = append(skips, &Skip{_skip[0], _skip[1]})
+	}
+	return skips
+}
+
 func GetSkipKey() string {
 	return os.Getenv("SKIP_KEY")
 }

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"strings"
@@ -20,6 +21,10 @@ type Skip struct {
 	ItemName string
 }
 
+func (s *Skip) String() string {
+	return fmt.Sprintf("Skip{HostName: %s,ItemName: %s", s.HostName, s.ItemName)
+}
+
 func GetSkips() []*Skip {
 	skips := make([]*Skip, 0)
 	skip := strings.Split(os.Getenv("SKIPS"), ",")
@@ -34,9 +39,7 @@ func GetSkipKey() string {
 	return os.Getenv("SKIP_KEY")
 }
 
-// 在这里判断有些忽略的机器，如GrayLog故意让内存使用很高，当收到这个时，直接忽略掉
-
-func CreateMsg (alert *PrometheusAlert, keywords string) *TMessage {
+func CreateMsg (alert *PrometheusAlert, skips []*Skip) *TMessage {
 	_status := ""
 	if alert.Status == "firing" {
 		_status = "告警"
@@ -49,24 +52,33 @@ func CreateMsg (alert *PrometheusAlert, keywords string) *TMessage {
 		// 如果labels不为空，则取出所有的Labels
 		hostInfo := ""
 		if len(_alert.Labels) > 0 {
+			// 先检查是否匹配主机名与指标，如果匹配，则此条目录跳过即可
+			hostName := _alert.Labels["hostname"]
+			itemName := _alert.Labels["alertname"]
+			var okHostname, okItem bool
+			for _, skip := range skips {
+				// 为假就一直尝试匹配，直到匹配成功
+				if !okHostname {
+					okHostname, _ = regexp.MatchString(skip.HostName, hostName)
+				}
+				if !okItem {
+					okItem, _ = regexp.MatchString(skip.ItemName, itemName)
+				}
+				// 如果两个都匹配成功，跳出匹配关键字循环
+				if okHostname && okItem {
+					break
+				}
+			}
+			if okHostname && okItem {
+				log.Printf("忽略主机: %s, 指标: %s 的告警", hostName, itemName)
+				continue
+			}
+			// 继续的将相关指标显示出来
 			for k, v := range _alert.Labels {
 				if k == "job" || k == "severity" || k == "alertname" {
 					continue
 				}
-				var ok bool
-				for _, keyword := range strings.Split(keywords, ",") {
-					ok, _ = regexp.MatchString(keyword, v)
-					if ok {
-						break
-					}
-				}
-				if keywords != "" && ok {
-					hostInfo = ""
-					break
-				} else {
-					hostInfo = fmt.Sprintf("\t%s %s: %s ", hostInfo, k, v)
-				}
-
+				hostInfo = fmt.Sprintf("\t%s %s: %s ", hostInfo, k, v)
 			}
 		}
 		// 尝试从annotation中取description的值，追加进主机列表信息中

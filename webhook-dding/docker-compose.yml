@@ -9,5 +9,6 @@ webhook:
   environment:
     - TZ=Asia/Shanghai
     - GIN_MODE=release
-    - SKIP_KEY=log,es
+    # 忽略主机名匹配log或者es,且指标为内存的告警发送钉钉通知
+    - SKIPS=log:内存,es:内存
     - DDING_TOKEN=TokenValue

@@ -38,7 +38,7 @@ func send(c *gin.Context) {
 		return
 	}
 	// 详细告警信息在alert.Alerts里面
-	msg := utils.CreateMsg(alert, utils.GetSkipKey())
+	msg := utils.CreateMsg(alert, utils.GetSkips())
 	if msg != nil {
 		go func() {
 			url := fmt.Sprintf("%s%s", sendFmt, utils.GetToken())
@@ -53,7 +53,7 @@ func send(c *gin.Context) {
 			}
 		}()
 	} else {
-		log.Println("匹配到关键字", utils.GetSkipKey(), "此次告警将不会发送钉钉通知")
+		log.Println("匹配到关键字", utils.GetSkips(), "此次告警将不会发送钉钉通知")
 	}
 	c.JSON(200, gin.H{"message": "ok"})
 }

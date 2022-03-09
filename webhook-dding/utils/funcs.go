@@ -30,6 +30,9 @@ func GetSkips() []*Skip {
 	skip := strings.Split(os.Getenv("SKIPS"), ",")
 	for i := range skip {
 		_skip := strings.Split(skip[i], ":")
+		if len(_skip) != 2 {
+			log.Fatalln("environment SKIPS wrong: ", _skip)
+		}
 		skips = append(skips, &Skip{_skip[0], _skip[1]})
 	}
 	return skips

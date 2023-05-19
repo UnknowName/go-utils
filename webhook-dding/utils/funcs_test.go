@@ -23,3 +23,8 @@ func TestGetSkipKey(t *testing.T) {
 	}
 	fmt.Println(ok)
 }
+
+func TestGetSignature(t *testing.T) {
+	s := GetSignature("this is secret")
+	fmt.Println(s)
+}

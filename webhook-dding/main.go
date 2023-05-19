@@ -42,6 +42,10 @@ func send(c *gin.Context) {
 	if msg != nil {
 		go func() {
 			url := fmt.Sprintf("%s%s", sendFmt, utils.GetToken())
+			secret := utils.GetSecret()
+			if secret != "" {
+				url = fmt.Sprintf("%s%s", url, utils.GetSignature(secret))
+			}
 			httpClient := http.Client{Timeout: time.Second * 5}
 			resp, err := httpClient.Post(url, contentType, bytes.NewBuffer(msg.Encode()))
 			if err != nil {

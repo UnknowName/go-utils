@@ -1,15 +1,24 @@
 package utils
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
+	"time"
 )
 
 func GetToken() string {
 	return os.Getenv("DDING_TOKEN")
+}
+
+func GetSecret() string {
+	return os.Getenv("DDING_SECRET")
 }
 
 // env SKIPS=hostname:ItemName
@@ -31,7 +40,8 @@ func GetSkips() []*Skip {
 	for i := range skip {
 		_skip := strings.Split(skip[i], ":")
 		if len(_skip) != 2 {
-			log.Fatalln("environment SKIPS wrong: ", _skip)
+			log.Println("environment SKIPS wrong: ", _skip)
+			return nil
 		}
 		skips = append(skips, &Skip{_skip[0], _skip[1]})
 	}
@@ -103,4 +113,14 @@ func CreateMsg (alert *PrometheusAlert, skips []*Skip) *TMessage {
 		strings.Join(hosts, "\t\n"),
 	)
 	return NewTMessage(msg, nil, false)
+}
+
+func GetSignature(secret string) string {
+	now := time.Now().UnixMilli()
+	s := fmt.Sprintf("%d\n%s", now, secret)
+	mac := hmac.New(sha256.New, []byte(secret))
+	_, _ = mac.Write([]byte(s))
+	sign := base64.URLEncoding.EncodeToString(mac.Sum(nil))
+	sign = url.QueryEscape(sign)
+	return fmt.Sprintf("&timestamp=%d&sign=%s", now, sign)
 }

@@ -13,6 +13,14 @@ import (
 	"time"
 )
 
+const duration = time.Hour * 24
+
+var record map[string]time.Time
+
+func init() {
+	record = make(map[string]time.Time)
+}
+
 func GetToken() string {
 	return os.Getenv("DDING_TOKEN")
 }
@@ -24,6 +32,7 @@ func GetSecret() string {
 // env SKIPS=hostname:ItemName
 // eg: SKIPS=log:内存,es:memory
 // 表示针对主机名称包含log或者es且指标为内存或memory的告警的直接忽略
+
 
 type Skip struct {
 	HostName string
@@ -86,6 +95,14 @@ func CreateMsg (alert *PrometheusAlert, skips []*Skip) *TMessage {
 				log.Printf("忽略主机: %s, 指标: %s 的告警", hostName, itemName)
 				continue
 			}
+			start := alert.Alerts[0].Start.Local()
+			key := fmt.Sprintf("%s:%s:%s:%s", _status, start, hostName, itemName)
+			latest, ok := record[key]
+			if ok && latest.After(time.Now()) {
+				log.Printf("%s %s 静默期，下个周期继续发送", hostName, itemName)
+				continue
+			}
+			record[key] = time.Now().Add(duration)
 			// 继续的将相关指标显示出来
 			for k, v := range _alert.Labels {
 				if k == "job" || k == "severity" || k == "alertname" {

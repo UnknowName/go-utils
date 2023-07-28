@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/unknowname/webhook-dding/utils"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -14,7 +14,14 @@ import (
 const (
 	sendFmt     = "https://oapi.dingtalk.com/robot/send?access_token="
 	contentType = "application/json"
+	defautSlice = time.Hour * 24
 )
+
+var recorder map[string]time.Time
+
+func init() {
+	recorder = make(map[string]time.Time)
+}
 
 func main() {
 	r := gin.Default()
@@ -23,7 +30,7 @@ func main() {
 }
 
 func send(c *gin.Context) {
-	postData, err := ioutil.ReadAll(c.Request.Body)
+	postData, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		log.Println("Read post data error ", err)
 		c.JSON(500, gin.H{"message": "Read post data error"})
@@ -40,6 +47,13 @@ func send(c *gin.Context) {
 	// 详细告警信息在alert.Alerts里面
 	msg := utils.CreateMsg(alert, utils.GetSkips())
 	if msg != nil {
+		key := msg.Text.Content
+		latest, ok := recorder[key]
+		if ok && latest.After(time.Now()) {
+			// 消息静默期，后续不执行
+			return
+		}
+		recorder[msg.Text.Content] = time.Now().Add(defautSlice)
 		go func() {
 			url := fmt.Sprintf("%s%s", sendFmt, utils.GetToken())
 			secret := utils.GetSecret()
@@ -52,7 +66,7 @@ func send(c *gin.Context) {
 				log.Println("send error ", err)
 			} else {
 				defer resp.Body.Close()
-				resp, _ := ioutil.ReadAll(resp.Body)
+				resp, _ := io.ReadAll(resp.Body)
 				log.Println(string(resp))
 			}
 		}()

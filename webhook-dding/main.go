@@ -8,19 +8,33 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 )
 
 const (
 	sendFmt     = "https://oapi.dingtalk.com/robot/send?access_token="
 	contentType = "application/json"
-	defautSlice = time.Hour * 24
+	defaultSlice = 24
 )
 
-var recorder map[string]time.Time
+var (
+	recorder map[string]time.Time
+	sliceHour time.Duration
+)
 
 func init() {
 	recorder = make(map[string]time.Time)
+	slice := os.Getenv("ALERT_SLICE")
+	v, err := strconv.Atoi(slice)
+	if err != nil {
+		log.Println("env ALERT_SLICE format wrong")
+		sliceHour = defaultSlice * time.Hour
+	} else {
+		log.Println("静默时间为", v, "小时")
+		sliceHour = time.Duration(v) * time.Hour
+	}
 }
 
 func main() {
@@ -53,7 +67,7 @@ func send(c *gin.Context) {
 			// 消息静默期，后续不执行
 			return
 		}
-		recorder[msg.Text.Content] = time.Now().Add(defautSlice)
+		recorder[msg.Text.Content] = time.Now().Add(sliceHour)
 		go func() {
 			url := fmt.Sprintf("%s%s", sendFmt, utils.GetToken())
 			secret := utils.GetSecret()
@@ -63,11 +77,11 @@ func send(c *gin.Context) {
 			httpClient := http.Client{Timeout: time.Second * 5}
 			resp, err := httpClient.Post(url, contentType, bytes.NewBuffer(msg.Encode()))
 			if err != nil {
-				log.Println("send error ", err)
+				log.Println("告警信息",string(msg.Encode()), "发送到钉钉失败", err)
 			} else {
 				defer resp.Body.Close()
 				resp, _ := io.ReadAll(resp.Body)
-				log.Println(string(resp))
+				log.Println("告警信息",string(msg.Encode()), "响应", string(resp))
 			}
 		}()
 	} else {

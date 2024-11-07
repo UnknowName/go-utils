@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"os"
 	"time"
 )
 
@@ -30,34 +29,27 @@ func NewGELFHandler(server string, port int) *GELFHandler {
 	return &GELFHandler{server: server, port: port, logProperty: baseProperty}
 }
 
+func (g *GELFHandler) name() string {
+	return "gelf"
+}
+
+func (g *GELFHandler) setLevel(level LogLevel) {
+	g.AddProperty("level", level)
+}
+
 func (g *GELFHandler) AddProperty(key string, value interface{}) {
 	g.logProperty[key] = value
 }
 
-func (g *GELFHandler) write(level, msg string) {
-	var gelfLevel int8
-	switch level {
-	case "DEBUG":
-		gelfLevel = 0
-	case "INFO":
-		gelfLevel = 1
-	case "WARN":
-		gelfLevel = 2
-	case "ERROR":
-		gelfLevel = 3
-	default:
-		gelfLevel = 0
-	}
+func (g *GELFHandler) write(msg string) {
 	logTime := time.Now().Format(timeFormat)
 	g.logProperty["time"] = logTime
-	g.logProperty["level"] = gelfLevel
-	g.logProperty["host"], _ = os.Hostname()
 	g.logProperty["short_message"] = msg
 	jsonMsg := g.toJson()
 	if g.conn == nil {
 		g.connect()
 	}
-	if _, err := g.conn.Write(jsonMsg);err != nil {
+	if _, err := g.conn.Write(jsonMsg); err != nil {
 		fmt.Println("Send message to server error ", err)
 	}
 }

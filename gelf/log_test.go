@@ -9,9 +9,10 @@ func TestNewLog(t *testing.T) {
 	log.SetLevel(DEBUG)
 	console := NewConsoleHandler()
 	gelf := NewGELFHandler("128.0.255.10", 12201)
-	gelf.AddProperty("app", "test-log")
+	gelf.AddProperty("source", "test")
 	log.AddHandlers(console)
 	log.AddHandlers(console, gelf)
+	msg := `test msg`
 	log.Info("test from msg on gelf")
-	log.Info("test from msg on gelf2")
+	log.Info(msg)
 }

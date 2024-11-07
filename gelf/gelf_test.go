@@ -1,15 +1,16 @@
 package gelf
 
 import (
+	"fmt"
 	"testing"
 )
 
 func TestNewGELFHandler(t *testing.T) {
-	server := "128.0.255.10"
-	port := 12201
-	// connect := fmt.Sprintf("%v:%v", server, port)
-	// fmt.Println(connect == "128.0.21.56:12201")
+	server := "172.18.61.78"
+	port := 12202
+	msg := `test msg`
+	fmt.Println(len(msg))
 	gelf := NewGELFHandler(server, port)
-	gelf.AddProperty("source", "cheng-pc")
-	gelf.write("INFO","test msg 1")
+	gelf.AddProperty("source", "cheng-pc5")
+	gelf.write(msg)
 }
